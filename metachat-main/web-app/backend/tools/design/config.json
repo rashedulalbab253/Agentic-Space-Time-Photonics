@@ -1,0 +1,36 @@
+{
+    "encoding": {
+        "otype": "HashGrid",
+        "n_levels": 8,
+        "n_features_per_level": 4,
+        "log2_hashmap_size": 8,
+        "base_resolution": 4,
+        "per_level_scale": 1.5
+    },
+    "model": {
+        "model": "hash",
+        "starting_image": null,
+        "symmetry": true,
+        "periodic": true,
+        "noise_seed": 8,
+        "batch_size": 64,
+        "prior_steps": 200,
+        "outer_steps": 2,
+        "inner_steps": 16,
+        "sdf_max": 0.5,
+        "min_gap": 0.044444444444444446,
+        "min_post": 0.044444444444444446,
+        "samples_per_point": 8,
+        "connectivity": true
+    },
+    "misc": {
+        "resolution_image": 2048,
+        "interval": 10,
+        "debug": false,
+        "save_img": true,
+        "checkpoint": null,
+        "device": "cuda"
+    },
+    "file_name": "config/init.png",
+    "threshold": 10
+}

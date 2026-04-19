@@ -1,0 +1,6 @@
+.env
+.venv
+logs/
+__pycache__/
+backend/tools/material_db/materials.db
+backend/tools/design/results_*

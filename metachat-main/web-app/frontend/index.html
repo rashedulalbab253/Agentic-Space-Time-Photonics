@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaChat</title>
+    <!-- Add MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="config.js"></script>
+    <style>
+        body {
+            background-color: #f5f7fb;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        .chat-container {
+            max-width: 900px;
+            height: 95vh;
+            margin: 20px auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #eaecef;
+            margin-bottom: 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1a1f36;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background-color: #ffffff;
+        }
+
+        .message {
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 85%;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background: #f0f4ff;
+            color: #1a1f36;
+            margin-left: auto;
+            border: 1px solid #e5e9ff;
+        }
+
+        .response-message {
+            background: #f8f9fa;
+            color: #1a1f36;
+            margin-right: auto;
+            border: 1px solid #eaecef;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding: 24px;
+            background: #ffffff;
+            border-top: 1px solid #eaecef;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e5e9ff;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #new-chat-button {
+            background-color: #10b981;
+            padding: 10px 20px;
+        }
+
+        #new-chat-button:hover {
+            background-color: #059669;
+        }
+
+        .status-message {
+            padding: 16px;
+            margin: 12px 24px;
+            color: #4b5563;
+            font-size: 15px;
+            min-height: 24px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .status-message.thinking {
+            background: none;
+            color: #4b5563;
+            animation: bounce-fade 1.5s ease-in-out infinite;
+        }
+
+        @keyframes bounce-fade {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-2px);
+                opacity: 0.5;
+            }
+        }
+
+        /* Remove individual span animations since we're animating the whole message */
+        .status-message.thinking span {
+            display: inline-block;
+        }
+
+        .response-image {
+            max-width: 100%;
+            margin: 12px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Improved scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .download-link {
+            display: inline-block;
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .download-link:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+        
+        .download-link:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>MetaChat</h1>
+            <button id="new-chat-button">New Chat</button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="status-message" id="status-message"></div>
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="Ask MetaChat...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("send-button").addEventListener("click", sendMessage);
+        document.getElementById("message-input").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // conversation ID tracking
+        let currentConversationId = null;
+
+        // event listener for new chat button
+        document.getElementById("new-chat-button").addEventListener("click", startNewChat);
+
+        async function sendMessage() {
+            const input = document.getElementById("message-input");
+            const messagesDiv = document.getElementById("chat-messages");
+            const statusDiv = document.getElementById("status-message");
+            const message = input.value.trim();
+            const backendBaseUrl = window.BACKEND_BASE_URL || "http://localhost:8000";
+            
+            if (!message) return;
+
+            // user message
+            const userDiv = document.createElement("div");
+            userDiv.className = "message user-message";
+            userDiv.textContent = message;
+            messagesDiv.appendChild(userDiv);
+
+            // clear input and disable
+            input.value = "";
+            input.disabled = true;
+            document.getElementById("send-button").disabled = true;
+            
+            // show default "Thinking..." status immediately
+            statusDiv.className = "status-message thinking";
+            statusDiv.innerHTML = "Thinking...".split('').map(char => 
+                char === ' ' ? ' ' : `<span>${char}</span>`
+            ).join('');
+            
+            // scroll to bottom to show the thinking status
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                // Include conversation ID in the request if it exists
+                const url = new URL("/chat", backendBaseUrl);
+                url.searchParams.append("message", message);
+                if (currentConversationId) {
+                    url.searchParams.append("conversation_id", currentConversationId);
+                }
+                
+                const eventSource = new EventSource(url);
+                
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    console.log("Received SSE data:", data);
+                    
+                    if (data.status) {
+                        const text = data.status;
+                        statusDiv.className = "status-message thinking";
+                        statusDiv.innerHTML = text.split('').map(char => 
+                            char === ' ' ? ' ' : `<span>${char}</span>`
+                        ).join('');
+                    } else if (data.type === "plots") {
+                        // Handle plots
+                        const responseDiv = document.createElement("div");
+                        responseDiv.className = "message response-message";
+                        
+                        // far field plot(s)
+                        if (data.data.farfield_plot) {
+                            const farfieldImg = document.createElement("img");
+                            farfieldImg.src = "data:image/png;base64," + data.data.farfield_plot;
+                            farfieldImg.className = "response-image";
+                            farfieldImg.alt = "Far field pattern";
+                            responseDiv.appendChild(farfieldImg);
+                        }
+                        if (data.data.farfield_plot_1) {
+                            const farfieldImg1 = document.createElement("img");
+                            farfieldImg1.src = "data:image/png;base64," + data.data.farfield_plot_1;
+                            farfieldImg1.className = "response-image";
+                            farfieldImg1.alt = "Far field pattern (wavelength 1)";
+                            responseDiv.appendChild(farfieldImg1);
+                        }
+                        if (data.data.farfield_plot_2) {
+                            const farfieldImg2 = document.createElement("img");
+                            farfieldImg2.src = "data:image/png;base64," + data.data.farfield_plot_2;
+                            farfieldImg2.className = "response-image";
+                            farfieldImg2.alt = "Far field pattern (wavelength 2)";
+                            responseDiv.appendChild(farfieldImg2);
+                        }
+                        
+                        // device plot
+                        if (data.data.device_plot) {
+                            const deviceImg = document.createElement("img");
+                            deviceImg.src = "data:image/png;base64," + data.data.device_plot;
+                            deviceImg.className = "response-image";
+                            deviceImg.alt = "Device structure";
+                            responseDiv.appendChild(deviceImg);
+                        }
+                        
+                        messagesDiv.appendChild(responseDiv);
+                    } else if (data.solution) {
+                        // store conversation ID from response
+                        if (data.conversation_id) {
+                            currentConversationId = data.conversation_id;
+                        }
+                        
+                        statusDiv.textContent = "";
+                        statusDiv.className = "status-message";
+                        
+                        // log (debug) the incoming solution
+                        console.log("Raw solution text:", data.solution);
+                        
+                        const responseDiv = document.createElement("div");
+                        responseDiv.className = "message response-message";
+                        
+                        // markdown link replacement
+                        let formattedText = data.solution
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold text
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>');             // Italic text
+                        
+                        // handling for markdown links
+                        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                        const matches = formattedText.match(linkRegex);
+                        console.log("Found markdown links:", matches);
+                        
+                        if (matches) {
+                            formattedText = formattedText.replace(linkRegex, (match, text, url) => {
+                                console.log(`Converting link: [${text}](${url})`);
+                                // Convert sandbox:/ URLs to the correct server URL
+                                const finalUrl = url.replace('sandbox:', backendBaseUrl);
+                                console.log(`Final URL: ${finalUrl}`);
+                                return `<a href="${finalUrl}" target="_blank" class="download-link">${text}</a>`;
+                            });
+                        }
+                        
+                        // handle newlines
+                        formattedText = formattedText.replace(/\n/g, '<br>');
+                        
+                        console.log("Formatted HTML:", formattedText);
+                        responseDiv.innerHTML = formattedText;
+                        messagesDiv.appendChild(responseDiv);
+                        
+                        // render LaTeX after adding the content to the DOM
+                        if (typeof MathJax !== 'undefined') {
+                            MathJax.typesetPromise([responseDiv]).catch((err) => {
+                                console.error('MathJax typesetting failed:', err);
+                            });
+                        }
+                        
+                        // clean up
+                        eventSource.close();
+                        input.disabled = false;
+                        document.getElementById("send-button").disabled = false;
+                    } else if (data.error) {
+                        // handle error
+                        statusDiv.textContent = "";
+                        const errorDiv = document.createElement("div");
+                        errorDiv.className = "message response-message";
+                        errorDiv.textContent = "Error: " + data.error;
+                        messagesDiv.appendChild(errorDiv);
+                        
+                        // clean up
+                        eventSource.close();
+                        input.disabled = false;
+                        document.getElementById("send-button").disabled = false;
+                    }
+                    
+                    // scroll to bottom
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                };
+                
+                eventSource.onerror = (error) => {
+                    console.error("EventSource failed:", error);
+                    statusDiv.textContent = "";
+                    const errorDiv = document.createElement("div");
+                    errorDiv.className = "message response-message";
+                    errorDiv.textContent = "Error: Connection to server failed";
+                    messagesDiv.appendChild(errorDiv);
+                    
+                    eventSource.close();
+                    input.disabled = false;
+                    document.getElementById("send-button").disabled = false;
+                };
+                
+            } catch (error) {
+                console.error(error);
+                statusDiv.textContent = "";
+                const errorDiv = document.createElement("div");
+                errorDiv.className = "message response-message";
+                errorDiv.textContent = "Error: Unable to reach backend.";
+                messagesDiv.appendChild(errorDiv);
+                
+                input.disabled = false;
+                document.getElementById("send-button").disabled = false;
+            }
+        }
+
+        function startNewChat() {
+            // clear the messages div
+            const messagesDiv = document.getElementById("chat-messages");
+            messagesDiv.innerHTML = "";
+            
+            // clear the status message
+            const statusDiv = document.getElementById("status-message");
+            statusDiv.textContent = "";
+            statusDiv.className = "status-message";
+            
+            // clear the input
+            const input = document.getElementById("message-input");
+            input.value = "";
+            
+            // reset the conversation ID
+            currentConversationId = null;
+            
+            input.disabled = false;
+            document.getElementById("send-button").disabled = false;
+        }
+    </script>
+</body>
+</html>
